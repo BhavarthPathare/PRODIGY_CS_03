@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Password Strength Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1 class="glitch" data-text="🔐 Password Strength Analyzer">🔐 Password Strength Analyzer</h1>
+        
+        <input type="password" id="password" placeholder="Type your password..." oninput="checkStrength()">
+        
+        <div class="meter">
+            <div id="strength-bar"></div>
+        </div>
+        
+        <p id="strength-text">Start typing to check strength...</p>
+        <ul id="suggestions"></ul>
+    </div>
+       <script>
+    const bar = document.getElementById("strength-bar");
+    const text = document.getElementById("strength-text");
+    const suggestionsList = document.getElementById("suggestions");
+
+    function checkStrength() {
+        const password = document.getElementById("password").value;
+
+        fetch("/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Emoji-based text feedback
+            let emoji = "🐌";
+            if (data.result.includes("Moderate")) emoji = "⚠️";
+            if (data.result.includes("Strong")) emoji = "🔥";
+
+            text.textContent = `${emoji} ${data.result}`;
+
+            // Animated strength bar
+            if (data.result.includes("Weak")) {
+                bar.style.width = "33%";
+                bar.style.background = "#ff4d4d";
+            } else if (data.result.includes("Moderate")) {
+                bar.style.width = "66%";
+                bar.style.background = "#ffcc00";
+            } else {
+                bar.style.width = "100%";
+                bar.style.background = "#00ff99";
+            }
+
+            // Suggestions with fade effect
+            suggestionsList.innerHTML = "";
+            if (data.suggestions.length > 0) {
+                suggestionsList.classList.add("visible");
+                data.suggestions.forEach(s => {
+                    let li = document.createElement("li");
+                    li.textContent = s;
+                    suggestionsList.appendChild(li);
+                });
+            } else {
+                suggestionsList.classList.remove("visible");
+            }
+        });
+    }
+</script>
+
+    </body>
+</html>
